@@ -1,25 +1,21 @@
 import pygame
-from pygame.locals import *
 import random
 
 pygame.init()
 
+#set screen size
 screen_width = 600
 screen_height = 600
-
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Maze')
 
 #define font
 font = pygame.font.SysFont(None, 40)
 
-#setup a rectangle for "Play Again" Option
-again_rect = Rect(screen_width // 2 - 80, screen_height // 2, 160, 50)
-
-#define player variables
+#create the player
 player_pos = [[int(screen_width / 2), int(screen_height / 2)]]
 player_pos.append([300,310])
-direction = 0 #1 is up, 2 is right, 3 is down, 4 is left
+direction = 0
 
 
 #define game variables
@@ -39,7 +35,7 @@ body_outer = (100, 100, 200)
 blue = (0, 0, 255)
 red = (255, 0, 0)
 
-
+#generates a maze
 def generate_maze(currand):
     maze = [[0 for _ in range(screen_width // cell_size)] for _ in range(screen_height // cell_size)]
     for row in range(len(maze)):
@@ -49,25 +45,28 @@ def generate_maze(currand):
 
     return maze
 
+#checks if the created maze touches the starting position of the player
 def check_starting_position_collision(maze, player_pos):
-    # Check if any part of the player's body is at the starting position
     for pos in player_pos:
         if maze[pos[1] // cell_size][pos[0] // cell_size] == 1:
             return True
     return False
 
+#draws the maze to the screen
 def draw_maze(maze):
     for row in range(len(maze)):
         for col in range(len(maze[0])):
             if maze[row][col] == 1:
                 pygame.draw.rect(screen, red, (col * cell_size, row * cell_size, cell_size, cell_size))
 
+#sets up initial maze
 maze = generate_maze(currand)
 while check_starting_position_collision(maze, player_pos):
     maze = generate_maze(currand)
 maze_values = []
 maze_values.append(maze)
 
+#checks if the player touches the maze
 def check_collision(player_pos, maze):
     player_head = player_pos[0]
     for row in range(len(maze)):
@@ -78,17 +77,19 @@ def check_collision(player_pos, maze):
                     return True
     return False
 
+#draws the screen
 def draw_screen():
     screen.fill(bg)
 
+#draws the score
 def draw_score(score):
     score_txt = 'Score: ' + str(score)
     score_img = font.render(score_txt, True, blue)
     screen.blit(score_img, (0, 0))
     score += 1
 
+#checks if the player meets the conditions to end the game
 def check_game_over(game_over):
-    #first check is to see if the player has eaten itself by checking if the head has clashed with the rest of the body
     head_count = 0
     for x in player_pos:
         if player_pos[0] == x and head_count > 0:
@@ -98,35 +99,38 @@ def check_game_over(game_over):
         head_count += 1
     return game_over
 
+#checks if the player has escaped the maze that helps to establish level variants
 def check_next_level(checker):
     if player_pos[0][0] < 0 or player_pos[0][0] > screen_width or player_pos[0][1] < 0 or player_pos[0][1] > screen_height:
         game_over = True 
     checker += 1	  
     return checker
 
-
-def draw_game_over():
-    over_text = "Game Over!"
-    over_img = font.render(over_text, True, blue)
-    pygame.draw.rect(screen, red, (screen_width // 2 - 80, screen_height // 2 - 60, 160, 50))
-    screen.blit(over_img, (screen_width // 2 - 80, screen_height // 2 - 50))
-
-
+#checks if the player has escaped the maze and uses a bool to determine if the level should increase
 next_level = False
 def check_next_level(next_level):
     if player_pos[0][0] < 0 or player_pos[0][0] > screen_width or player_pos[0][1] < 0 or player_pos[0][1] > screen_height: 
         next_level += 1	  
     return next_level
 
+#displays the end game screen
+def draw_game_over():
+    over_text = "Game Over!"
+    over_img = font.render(over_text, True, blue)
+    pygame.draw.rect(screen, red, (screen_width // 2 - 80, screen_height // 2 - 60, 160, 50))
+    screen.blit(over_img, (screen_width // 2 - 80, screen_height // 2 - 50))
+
+#game loop
 currand = 0.01
 run = True
 while run:
 
+    #draws our screen
     draw_screen()
     draw_score(score)
     draw_maze(maze)
     
-
+    #determines direction of the player
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -146,9 +150,7 @@ while run:
         #update player
         if update_player > 99:
             update_player = 0
-            #first shift the positions of each player piece back.
             player_pos = player_pos[-1:] + player_pos[:-1]
-            #now update the position of the head based on direction
             if check_collision(player_pos, maze):
                 game_over = True
             #heading up
