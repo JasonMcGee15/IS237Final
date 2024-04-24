@@ -113,12 +113,37 @@ def check_next_level(next_level):
         next_level += 1	  
     return next_level
 
+# Reads high scores from a file
+def read_high_scores():
+    with open("high_scores.txt", "r") as file:
+        high_scores = [int(score) for score in file.readlines()]
+    return high_scores
+
+#checks and adds the highscore to the file
+def add_high_score(score):
+    highscore = read_high_scores()
+    if score > max(highscore):
+        highscore.remove(max(highscore))
+        highscore.append(score)
+        with open("high_scores.txt", "w") as file:
+            file.write(str(score))
+        return True
+    return False    
+
 #displays the end game screen
-def draw_game_over():
+def draw_game_over(pscore):
     over_text = "Game Over!"
     over_img = font.render(over_text, True, blue)
-    pygame.draw.rect(screen, red, (screen_width // 2 - 80, screen_height // 2 - 60, 160, 50))
+    pygame.draw.rect(screen, red, (screen_width // 2 - 140, screen_height // 2 - 60, 300, 120))
     screen.blit(over_img, (screen_width // 2 - 80, screen_height // 2 - 50))
+    add_high_score(pscore)
+    y_offset = 0
+    for num, score in enumerate(read_high_scores()):
+        score_text = (f"Highest score is: {score}")
+        score_img = font.render(score_text, True, blue)
+        screen.blit(score_img, (screen_width // 2 - 120, screen_height // 2 + 20 + y_offset))
+        y_offset += 30
+
 
 #game loop
 currand = 0.01
@@ -181,7 +206,7 @@ while run:
                 maze = [[0 for _ in range(screen_width // cell_size)] for _ in range(screen_height // cell_size)]
                 for row in range(len(maze)):
                     for col in range(len(maze[0])):
-                        if random.random() < (currand)+0.01:  # Adjust this probability for more or less walls
+                        if random.random() < (currand)+0.01:
                             maze[row][col] = 1
                 while check_starting_position_collision(maze, player_pos):
                        maze = generate_maze(currand)
@@ -189,8 +214,9 @@ while run:
                        
                        
     if game_over == True:
-        draw_game_over()
+        draw_game_over(score)
 
+    #draw the player
     head = 1
     for x in player_pos:
 
